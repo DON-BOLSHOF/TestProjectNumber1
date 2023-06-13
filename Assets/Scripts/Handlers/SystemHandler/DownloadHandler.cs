@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utils;
@@ -10,13 +11,13 @@ namespace Handlers.SystemHandler
     public sealed class DownloadHandler : IInitializable
     {
         [Inject] private ErrorHandler _errorHandler;
-        
-        private const string IMAGES_URL = "http://data.ikppbb.com/test-task-unity-data/pics/";
-
         private WebRequester _webRequester;
+        
+        private int _maxConcurrentDownloads = 4;
 
         public Action<Texture2D, int> OnDownloadedImage;
 
+        private const string IMAGES_URL = "http://data.ikppbb.com/test-task-unity-data/pics/";
         public void Initialize()
         {
             _webRequester = new WebRequester(_errorHandler);
@@ -24,7 +25,7 @@ namespace Handlers.SystemHandler
 
         public async Task<Sprite> LoadImage(int index)
         {
-            var texture2D =  await _webRequester.GetRemoteTexture(IMAGES_URL + (index+1) + ".jpg");//Некоторые интеллектуалы отсчет начинают с 1...
+            var texture2D =  await _webRequester.GetRemoteTexture(IMAGES_URL + (index+1) + ".jpg");
 
             if (texture2D == null)
             {
@@ -36,17 +37,24 @@ namespace Handlers.SystemHandler
             return TextureConverter.ConvertTexture(texture2D);
         }
 
-        public async Task<List<Sprite>> LoadImages(int limit)
+        public async Task<List<Sprite>> LoadImages(int from, int to)
         {
             var result = new List<Sprite>();
             
-            for (var i = 0; i < limit; i++)
+            for (var i = from; i < to;)
             {
-                var image = await LoadImage(i);
-
-                if (image == null) return null;
+                var spriteBatch = new List<Task<Sprite>>();
+                for (int j = 0; j < _maxConcurrentDownloads && i< to; j++,i++)
+                {
+                    spriteBatch.Add( LoadImage(i));
+                }
                 
-                result.Add(image);
+                var loadedSprites =await Task.WhenAll(spriteBatch);
+
+                if (loadedSprites.ToList().Where(t => t!= null).ToArray().Length != loadedSprites.Length) //Все хорошо подгрузили
+                    return null;
+                
+                result.AddRange(loadedSprites);
             }
 
             return result;

@@ -19,7 +19,10 @@ namespace Components
         private ScrollingImage[] _scrollingImages;
 
         private readonly DisposeHolder _trash = new();
-        private int _currentIndex;
+        private int _currentLoadedIndex;
+        
+        private const int LOADINGBATCH = 8;
+        private const int LOADINGTHREASHOLD = 10;
         private const int MAXIMUM_IMAGES = 66;
 
         private void Awake()
@@ -36,23 +39,31 @@ namespace Components
         private async void ChangeImages(float scrollPerCent)
         {
             var currentIndex = (int)(MAXIMUM_IMAGES * scrollPerCent);
-            if(currentIndex == _currentIndex) return;
+            if(currentIndex + LOADINGTHREASHOLD <= _currentLoadedIndex) return;
+            if(_currentLoadedIndex >= MAXIMUM_IMAGES) return;
 
-            _currentIndex = currentIndex;
-            
-            foreach (var _scrollImage in _scrollingImages.Skip(currentIndex).Take(8).Where(i => i.Image.sprite == null))
+            var loadedIndex = _currentLoadedIndex;
+            _currentLoadedIndex += LOADINGBATCH;
+
+            var sprites = await _galleryLoader.LoadSprites(loadedIndex, _currentLoadedIndex);//Пачками грузим
+            var spriteIndex = 0;
+            foreach (var scrollImage in _scrollingImages.Skip(loadedIndex).Take(sprites.Count).Where(i => i.Image.sprite == null))
             {
-                _scrollImage.Image.sprite = await _galleryLoader.LoadSprite(_scrollImage.Index);
-                currentIndex++;
+                scrollImage.Image.sprite = sprites[spriteIndex];
+                spriteIndex++;
             }
         }
 
         private async void Start()
         {
-            for (var i = 0; i < 10; i++)
+            var sprites = await _galleryLoader.LoadSprites(0, 10);
+
+            for (var i = 0; i < LOADINGTHREASHOLD; i++)
             {
-                _images[i].sprite = await _galleryLoader.LoadSprite(i);
+                _images[i].sprite = sprites[i];
             }
+
+            _currentLoadedIndex = LOADINGTHREASHOLD;
         }
 
         private void OnDestroy()

@@ -18,7 +18,7 @@ namespace Components
 
         private ReactiveEvent OnDownloadedImage = new();
 
-        private const int LIMIT_FIRST_DOWNLOAD = 6; //Символическая условность
+        private const int LIMIT_FIRST_DOWNLOAD =10; //Символическая условность
         private static readonly DisposeHolder _trash = new();
 
         private void Awake()
@@ -41,7 +41,7 @@ namespace Components
         private async void OpenGallery()
         {
             _loadPanel.StartLoad(LIMIT_FIRST_DOWNLOAD);
-            var images = await _downloadHandler.LoadImages(LIMIT_FIRST_DOWNLOAD);
+            var images = await _downloadHandler.LoadImages(0, LIMIT_FIRST_DOWNLOAD);
 
             if (images != null)
                 _sceneLoader.SceneLoad();

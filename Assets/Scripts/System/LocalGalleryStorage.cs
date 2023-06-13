@@ -13,6 +13,8 @@ namespace System
 
         private Sprite[] _sprites = new Sprite[66];
 
+        public int SpritesCount => _sprites.Length;
+
         public void Initialize()
         {
             _downloadHandler.OnDownloadedImage += LoadedTexture;

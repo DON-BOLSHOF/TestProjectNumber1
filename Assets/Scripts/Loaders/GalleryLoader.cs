@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Handlers.SystemHandler;
 using UnityEngine;
@@ -11,9 +13,13 @@ namespace Loaders
         [Inject] private LocalGalleryStorage _localGalleryStorage;
         [Inject] private StorageHandler _storageHandler;
         [Inject] private DownloadHandler _downloadHandler;
+        
+        private int _maxConcurrentDownloads = 10;
 
-        public async Task<Sprite> LoadSprite(int index)
+        private async Task<Sprite> LoadSprite(int index)
         {
+            if (index >= _localGalleryStorage.SpritesCount) return null;
+            
             var sprite = _localGalleryStorage.GetSprite(index);
             if (sprite != null) return sprite;
 
@@ -26,6 +32,33 @@ namespace Loaders
             }
 
             return await _downloadHandler.LoadImage(index);
+        }
+
+        public async Task<List<Sprite>> LoadSprites(int from, int to)
+        {
+            if (from >= _localGalleryStorage.SpritesCount) return null;
+            if (to >= _localGalleryStorage.SpritesCount) to = _localGalleryStorage.SpritesCount;
+            
+            var result = new List<Sprite>();
+
+            for (var i = from; i < to;)
+            {
+                var spriteBatch = new List<Task<Sprite>>();
+
+                for (int j =0; j < _maxConcurrentDownloads && i < to; j++, i++)
+                {
+                    spriteBatch.Add( LoadSprite(i));
+                }
+
+                var loadedSprites =await Task.WhenAll(spriteBatch);
+
+                if (loadedSprites.ToList().Where(t => t!= null).ToArray().Length != loadedSprites.Length) //Все хорошо подгрузили
+                    return null;
+                
+                result.AddRange(loadedSprites);
+            }
+
+            return result;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Utils;
 
 namespace Handlers.SystemHandler
 {
@@ -10,27 +11,24 @@ namespace Handlers.SystemHandler
         public void SaveTexture(Texture2D texture, int index)
         {
             var byteCode = texture.EncodeToJPG();
-
             var base64Texture = Convert.ToBase64String(byteCode);
 
-            PlayerPrefs.SetString(index.ToString(), base64Texture);
-            PlayerPrefs.Save();
+            Serializator.SerializeData(base64Texture, index.ToString());
         }
 
         public Texture2D ReadTextureFromPlayerPrefs (int index)
         {
-            var base64Tex = PlayerPrefs.GetString (index.ToString(), null);
-
+            var base64Tex = Serializator.DeserializeData(index.ToString());
+            
             if (string.IsNullOrEmpty(base64Tex)) return null;
-            var texByte = Convert.FromBase64String (base64Tex);
-            var tex = new Texture2D (2, 2);
+                
+            var texturesBytes = Convert.FromBase64String (base64Tex);
+            var texture2D = new Texture2D (2, 2);
 
-            if (tex.LoadImage (texByte)) {
-                OnReadTexture?.Invoke(tex, index);
-                return tex;
-            }
-
-            return null;
+            if (!texture2D.LoadImage(texturesBytes)) return null;
+            
+            OnReadTexture?.Invoke(texture2D, index);
+            return texture2D;
         }
     }
 }
