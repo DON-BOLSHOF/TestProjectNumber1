@@ -15,7 +15,7 @@ namespace Handlers.SystemHandler
 
         private WebRequester _webRequester;
 
-        public Action<Texture2D, string> OnDownloadedImage;
+        public Action<Texture2D, int> OnDownloadedImage;
 
         public void Initialize()
         {
@@ -32,8 +32,8 @@ namespace Handlers.SystemHandler
                 return null;
             }  
             
-            OnDownloadedImage?.Invoke(texture2D, index.ToString());
-            return ConvertTexture(texture2D);
+            OnDownloadedImage?.Invoke(texture2D, index);
+            return TextureConverter.ConvertTexture(texture2D);
         }
 
         public async Task<List<Sprite>> LoadImages(int limit)
@@ -50,12 +50,6 @@ namespace Handlers.SystemHandler
             }
 
             return result;
-        }
-        
-        private Sprite ConvertTexture(Texture2D texture2D)
-        {
-            return Sprite.Create(texture2D, new Rect(0, 0, texture2D.width, texture2D.height),
-                new Vector2(0.5f, 0.5f), 100f);
         }
     }
 }

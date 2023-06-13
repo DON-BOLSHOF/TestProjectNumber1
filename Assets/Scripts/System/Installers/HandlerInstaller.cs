@@ -1,5 +1,4 @@
-﻿using Handlers;
-using Handlers.SystemHandler;
+﻿using Handlers.SystemHandler;
 using Zenject;
 
 namespace System.Installers

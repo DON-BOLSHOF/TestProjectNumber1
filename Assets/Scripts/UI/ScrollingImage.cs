@@ -13,18 +13,5 @@ namespace UI
             Image = image;
             Index = currentIndex;
         }
-
-        public void ChangePosition(int index, int threashold)
-        {
-            if (Index == index) return;
-
-            var anchoredPosition = Image.rectTransform.anchoredPosition;
-            anchoredPosition = index > Index
-                ? new Vector2(anchoredPosition.x, anchoredPosition.y - threashold)
-                : new Vector2(anchoredPosition.x, anchoredPosition.y + threashold);
-            Image.rectTransform.anchoredPosition = anchoredPosition;
-
-            Index = index;
-        }
     }
 }

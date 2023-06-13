@@ -18,7 +18,7 @@ namespace Components
 
         private ReactiveEvent OnDownloadedImage = new();
 
-        private const int LIMIT_FIRST_DOWNLOAD = 10; //Символическая условность
+        private const int LIMIT_FIRST_DOWNLOAD = 6; //Символическая условность
         private static readonly DisposeHolder _trash = new();
 
         private void Awake()
@@ -33,7 +33,7 @@ namespace Components
             _trash.Retain(_menuWidget.OnGalleryButtonClicked.Subscribe(OpenGallery));
         }
 
-        private void LoadNewImage(Texture2D arg1, string arg2)
+        private void LoadNewImage(Texture2D arg1, int arg2)
         {
             OnDownloadedImage?.Execute();
         }
